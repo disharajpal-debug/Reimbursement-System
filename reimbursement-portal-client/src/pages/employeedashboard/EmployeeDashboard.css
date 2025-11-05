@@ -1,0 +1,217 @@
+.employee-container {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  min-height: 100vh;
+  position: relative;
+}
+
+.employee-navbar {
+  background: #2c3e50;
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.employee-navbar h2 {
+  margin: 0;
+  font-weight: bold;
+}
+
+.employee-navbar ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.employee-navbar ul li {
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: bold;
+}
+
+.employee-navbar ul li:hover {
+  text-decoration: underline;
+}
+
+.employee-content {
+  padding: 20px;
+}
+
+.new-request-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+  margin-bottom: 40px;
+}
+
+.new-request-card select {
+  margin-left: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+}
+
+.form-area {
+  margin-top: 10px;
+}
+
+.welcome-card {
+  text-align: center;
+  padding: 50px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+}
+
+.section {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  border: 1px solid #ddd;
+  padding: 10px;
+  background: #34495e;
+  color: white;
+  text-align: center;
+}
+
+.table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}
+
+.button {
+  padding: 10px;
+  background: #2980b9;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.button:hover {
+  background: #1f6b9a;
+}
+
+.navButton {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.navButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navLogout {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #e74c3c;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.navLogout:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* Chat Widget */
+.chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  height: 350px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.chat-widget h4 {
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  margin-bottom: 10px;
+}
+
+.chat-message {
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 5px;
+}
+
+.chat-you {
+  background: #d1e7ff;
+  text-align: right;
+}
+
+.chat-bot {
+  background: #e9ecef;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.chat-input button {
+  padding: 8px 15px;
+  background: #004aad;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.chat-input button:hover {
+  background: #003380;
+}

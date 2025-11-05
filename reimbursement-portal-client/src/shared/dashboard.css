@@ -1,0 +1,527 @@
+/* Shared Dashboard Styles - Based on Admin Dashboard Design */
+
+.dashboard-container {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  min-height: 100vh;
+  position: relative;
+}
+
+.dashboard-navbar {
+  background: #2c3e50;
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-navbar h2 {
+  margin: 0;
+  font-weight: bold;
+}
+
+.dashboard-content {
+  padding: 20px;
+}
+
+.section {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+}
+
+.section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.table th {
+  border: 1px solid #ddd;
+  padding: 10px;
+  background: #34495e;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+}
+
+.table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.button {
+  padding: 10px 16px;
+  background: #2980b9;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background: #1f6b9a;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button-success {
+  background: #27ae60;
+}
+
+.button-success:hover {
+  background: #219a52;
+}
+
+.button-danger {
+  background: #e74c3c;
+}
+
+.button-danger:hover {
+  background: #c0392b;
+}
+
+.button-warning {
+  background: #f39c12;
+}
+
+.button-warning:hover {
+  background: #e67e22;
+}
+
+.navButton {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  margin-left: 10px;
+}
+
+.navButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navLogout {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #e74c3c;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+  margin-left: 10px;
+}
+
+.navLogout:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-approved {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  border: 1px solid #f5c6cb;
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  border: 1px solid #c3e6cb;
+}
+
+/* Chat Widget */
+.chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  height: 350px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  z-index: 1000;
+}
+
+.chat-widget h4 {
+  margin: 0 0 10px 0;
+  text-align: center;
+  color: #2c3e50;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  margin-bottom: 10px;
+}
+
+.chat-message {
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 5px;
+}
+
+.chat-you {
+  background: #d1e7ff;
+  text-align: right;
+}
+
+.chat-bot {
+  background: #e9ecef;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.chat-input button {
+  padding: 8px 15px;
+  background: #2c3e50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.chat-input button:hover {
+  background: #34495e;
+}
+
+/* Side Panel Styles */
+.side-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 250px;
+  height: 100vh;
+  background: #2c3e50;
+  color: white;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.side-panel-header {
+  padding: 20px;
+  border-bottom: 1px solid #34495e;
+  background: #34495e;
+}
+
+.side-panel-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.side-panel-nav {
+  flex: 1;
+  padding: 10px 0;
+  overflow-y: auto;
+}
+
+.side-panel-item {
+  width: 100%;
+  padding: 15px 20px;
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.side-panel-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-left-color: #3498db;
+}
+
+.side-panel-item.active {
+  background: #3498db;
+  border-left-color: #2980b9;
+}
+
+.side-panel-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.side-panel-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.side-panel-footer {
+  padding: 20px;
+  border-top: 1px solid #34495e;
+}
+
+.side-panel-logout {
+  width: 100%;
+  padding: 15px 20px;
+  background: #e74c3c;
+  border: none;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+.side-panel-logout:hover {
+  background: #c0392b;
+}
+
+/* Main content adjustment for side panel */
+.dashboard-container {
+  margin-left: 250px;
+}
+
+.dashboard-navbar {
+  margin-left: 250px;
+}
+
+/* Status Badge Styles */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-approved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* Button Variants */
+.button-success {
+  background-color: #28a745 !important;
+}
+
+.button-success:hover {
+  background-color: #218838 !important;
+}
+
+.button-danger {
+  background-color: #dc3545 !important;
+}
+
+.button-danger:hover {
+  background-color: #c82333 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .side-panel {
+    width: 200px;
+  }
+  
+  .dashboard-container {
+    margin-left: 200px;
+  }
+  
+  .dashboard-navbar {
+    margin-left: 200px;
+  }
+  
+  .dashboard-content {
+    padding: 10px;
+  }
+  
+  .section {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .form-group {
+    min-width: 100%;
+  }
+  
+  .table {
+    font-size: 12px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 8px 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .side-panel {
+    width: 60px;
+  }
+  
+  .side-panel-text {
+    display: none;
+  }
+  
+  .side-panel-item {
+    justify-content: center;
+    padding: 15px 10px;
+  }
+  
+  .side-panel-logout {
+    justify-content: center;
+    padding: 15px 10px;
+  }
+  
+  .dashboard-container {
+    margin-left: 60px;
+  }
+  
+  .dashboard-navbar {
+    margin-left: 60px;
+  }
+}

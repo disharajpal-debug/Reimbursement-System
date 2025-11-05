@@ -1,0 +1,94 @@
+/* ---------- Container ---------- */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #2c3e50, #3498db, #6dd5fa);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* ---------- Card ---------- */
+  .login-card {
+    background: #fff;
+    padding: 35px 45px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    width: 400px;
+    text-align: center;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  /* ---------- Heading ---------- */
+  .login-heading {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  /* ---------- Input ---------- */
+  .login-input {
+    width: 100%;
+    padding: 14px;
+    margin: 12px 0;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  
+  .login-input:focus {
+    border-color: #2980b9;
+  }
+  
+  /* ---------- Button ---------- */
+  .login-button {
+    width: 100%;
+    padding: 14px;
+    background: #2980b9;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background 0.3s ease;
+  }
+  
+  .login-button:hover {
+    background: #1f6ea9;
+  }
+  
+  .login-button-disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+  }
+  
+  /* ---------- Error ---------- */
+  .login-error {
+    color: #e74c3c;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  /* ---------- Footer ---------- */
+  .login-footer {
+    margin-top: 15px;
+    font-size: 14px;
+  }
+  
+  .login-link {
+    color: #2980b9;
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 5px;
+  }
+  
+  .login-link:hover {
+    text-decoration: underline;
+  }
+  
