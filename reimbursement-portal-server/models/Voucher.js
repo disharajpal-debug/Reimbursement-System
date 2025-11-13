@@ -3,6 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     voucherNo: { type: DataTypes.STRING, allowNull: false, unique: true },
     employeeName: { type: DataTypes.STRING, allowNull: false },
     employeeId: { type: DataTypes.INTEGER, allowNull: false },
+    managerId: { type: DataTypes.INTEGER, allowNull: true },
     formType: {
       type: DataTypes.ENUM(
         "cash_payment",
@@ -41,6 +42,26 @@ module.exports = (sequelize, DataTypes) => {
     completedBy: { type: DataTypes.INTEGER },
     completedAt: { type: DataTypes.DATE },
   });
+
+  Voucher.associate = (models) => {
+    // Employee who created the voucher
+    Voucher.belongsTo(models.User, {
+      as: "employee",
+      foreignKey: "employeeId",
+    });
+
+    // Manager of the employee
+    Voucher.belongsTo(models.User, {
+      as: "manager",
+      foreignKey: "managerId",
+    });
+
+    // User who approved the voucher
+    Voucher.belongsTo(models.User, {
+      as: "approver",
+      foreignKey: "approvedBy",
+    });
+  };
 
   return Voucher;
 };

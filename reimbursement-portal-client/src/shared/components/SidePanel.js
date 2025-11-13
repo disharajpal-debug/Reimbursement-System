@@ -1,42 +1,45 @@
-import React from 'react';
-import '../dashboard.css';
+import React from "react";
+import "../dashboard.css";
 
 const SidePanel = ({ selectedForm, setSelectedForm, userRole, onLogout }) => {
   const employeeForms = [
-    { id: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { id: 'cash-payment', name: 'Cash Payment', icon: '💰' },
-    { id: 'local-travel', name: 'Local Travel', icon: '🚗' },
-    { id: 'outstation-travel', name: 'Outstation Travel', icon: '✈️' },
-    { id: 'vendor-payment', name: 'Vendor Payment', icon: '🏪' },
-    { id: 'my-requests', name: 'My Requests', icon: '📝' },
+    { id: "dashboard", name: "Dashboard", icon: "📊" },
+    { id: "cash-payment", name: "Cash Payment", icon: "💰" },
+    { id: "local-travel", name: "Local Travel", icon: "🚗" },
+    { id: "outstation-travel", name: "Outstation Travel", icon: "✈️" },
+    { id: "vendor-payment", name: "Vendor Payment", icon: "🏪" },
+    { id: "my-requests", name: "My Requests", icon: "📝" },
   ];
 
   const managerForms = [
-    { id: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { id: 'cash-payment', name: 'Cash Payment', icon: '💰' },
-    { id: 'local-travel', name: 'Local Travel', icon: '🚗' },
-    { id: 'outstation-travel', name: 'Outstation Travel', icon: '✈️' },
-    { id: 'vendor-payment', name: 'Vendor Payment', icon: '🏪' },
-    { id: 'my-requests', name: 'Team Requests', icon: '📝' },
-    { id: 'voucher-approval', name: 'Voucher Approval', icon: '✅' },
+    { id: "dashboard", name: "Dashboard", icon: "📊" },
+    { id: "team-requests", name: "Team Requests", icon: "👥" },
+    { id: "cash-payment", name: "Cash Payment", icon: "💰" },
+    { id: "local-travel", name: "Local Travel", icon: "🚗" },
+    { id: "outstation-travel", name: "Outstation Travel", icon: "✈️" },
+    { id: "vendor-payment", name: "Vendor Payment", icon: "🏪" },
+    { id: "my-requests", name: "My Requests", icon: "📝" },
   ];
 
   const adminForms = [
-    { id: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { id: 'cash-payment', name: 'Cash Payment', icon: '💰' },
-    { id: 'local-travel', name: 'Local Travel', icon: '🚗' },
-    { id: 'outstation-travel', name: 'Outstation Travel', icon: '✈️' },
-    { id: 'vendor-payment', name: 'Vendor Payment', icon: '🏪' },
-    { id: 'my-requests', name: 'All Requests', icon: '📝' },
-    { id: 'user-management', name: 'User Management', icon: '👥' },
-    { id: 'voucher-approval', name: 'Voucher Approval', icon: '✅' },
+    { id: "dashboard", name: "Dashboard", icon: "📊" },
+    { id: "all-requests", name: "All Requests", icon: "📝" },
+    { id: "cash-payment", name: "Cash Payment", icon: "💰" },
+    { id: "local-travel", name: "Local Travel", icon: "🚗" },
+    { id: "outstation-travel", name: "Outstation Travel", icon: "✈️" },
+    { id: "vendor-payment", name: "Vendor Payment", icon: "🏪" },
+    { id: "voucher-approval", name: "Voucher Approval", icon: "✅" },
+    { id: "user-management", name: "User Management", icon: "👥" },
+    { id: "my-requests", name: "My Requests", icon: "📋" },
+    { id: "print-forms", name: "Print Forms", icon: "🖨️" },
+    { id: "transaction-log", name: "Transaction Log", icon: "📅" },
   ];
 
   // Filter forms based on user role
   const getAvailableForms = () => {
-    if (userRole === 'admin') {
+    if (userRole === "admin") {
       return adminForms; // Admin sees all forms including admin-specific ones
-    } else if (userRole === 'manager') {
+    } else if (userRole === "manager") {
       return managerForms; // Manager sees employee forms plus approvals
     } else {
       // Employee sees employee forms
@@ -53,7 +56,9 @@ const SidePanel = ({ selectedForm, setSelectedForm, userRole, onLogout }) => {
         {getAvailableForms().map((form) => (
           <button
             key={form.id}
-            className={`side-panel-item ${selectedForm === form.id ? 'active' : ''}`}
+            className={`side-panel-item ${
+              selectedForm === form.id ? "active" : ""
+            }`}
             onClick={() => setSelectedForm(form.id)}
           >
             <span className="side-panel-icon">{form.icon}</span>

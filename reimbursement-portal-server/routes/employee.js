@@ -146,20 +146,29 @@ router.get("/dashboard-stats", authenticateToken, async (req, res) => {
 // 🔹 Get manager dashboard statistics and team requests
 router.get("/manager/dashboard", authenticateToken, async (req, res) => {
   try {
+    console.log("Manager dashboard request received");
+    console.log("User from token:", req.user);
+
     const managerId = req.user.id;
     if (req.user.role !== "manager") {
+      console.log("Access denied - User role:", req.user.role);
       return res.status(403).json({
         success: false,
         error: "Access denied. Manager role required.",
       });
     }
 
+    console.log("Manager ID:", managerId);
+
     // Get team members
+    console.log("Fetching team members for managerId:", managerId);
     const teamMembers = await db.User.findAll({
       where: { managerId },
       attributes: ["id", "name", "email", "role"],
     });
+    console.log("Found team members:", teamMembers.length);
     const teamIds = teamMembers.map((m) => m.id);
+    console.log("Team member IDs:", teamIds);
 
     // Fetch all team requests (excluding manager's own requests)
     // Use Op.in for proper array handling, return empty array if no team members

@@ -1,37 +1,15 @@
 const db = require("../models");
 const CashPayment = db.CashPayment;
-const { createVoucherFromForm } = require('../utils/voucherUtils');
+const { createVoucherFromForm } = require("../utils/voucherUtils");
 
 exports.createCashPayment = async (req, res) => {
   try {
     const payment = await CashPayment.create(req.body);
-    
-    // Create voucher automatically
-    try {
-      const formData = {
-        employeeName: payment.employeeName,
-        date: payment.date,
-        voucherNo: payment.voucherNo,
-        paymentDate: payment.paymentDate,
-        projectName: payment.projectName,
-        ecLocation: payment.ecLocation,
-        bills: payment.bills || [],
-        totalExpenses: payment.totalExpenses,
-        advancePayment: payment.advancePayment,
-        balanceReimbursement: payment.balanceReimbursement,
-        amtInWords: payment.amtInWords,
-        preparedBy: payment.preparedBy,
-        receiverSign: payment.receiverSign,
-        accountsSign: payment.accountsSign,
-        authorizedSignatory: payment.authorizedSignatory
-      };
-      
-      await createVoucherFromForm(formData, 'cash_payment', payment.userId, payment.employeeName);
-    } catch (voucherError) {
-      console.error('Error creating voucher for cash payment:', voucherError);
-      // Don't fail the main request if voucher creation fails
-    }
-    
+
+    // NOTE: We no longer auto-create a Voucher record here to avoid duplicating
+    // requests in both the cash payment table and the vouchers table.
+    // Voucher creation should be an explicit action (or handled centrally) if needed.
+
     res.status(201).json(payment);
   } catch (err) {
     console.error("CashPayment Create Error:", err);

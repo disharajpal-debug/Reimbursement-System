@@ -152,6 +152,38 @@ const Register = () => {
             </select>
           )}
 
+          {/* Show selected manager details for clarity */}
+          {form.role === "employee" && form.managerId && (
+            <div
+              style={{
+                textAlign: "left",
+                marginTop: "8px",
+                padding: "10px",
+                border: "1px solid #eee",
+                borderRadius: 8,
+                background: "#fafafa",
+              }}
+            >
+              <strong>Selected Manager:</strong>
+              {(() => {
+                const sel = managers.find(
+                  (m) => String(m.id) === String(form.managerId)
+                );
+                if (!sel) return <div style={{ marginTop: 6 }}>Loading...</div>;
+                return (
+                  <div style={{ marginTop: 6 }}>
+                    <div>
+                      <strong>Name:</strong> {sel.name}
+                    </div>
+                    <div style={{ fontSize: 13, color: "#555" }}>
+                      <strong>Email:</strong> {sel.email}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}

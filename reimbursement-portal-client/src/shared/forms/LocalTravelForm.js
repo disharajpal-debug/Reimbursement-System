@@ -1,23 +1,71 @@
 // src/pages/vouchers/LocalTravelForm.js
-import React, { useState, useEffect } from "react";
-import Tesseract from "tesseract.js";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import OCRUpload from "../../components/OCRUpload";
 
 // --- Number to Words (Indian Format) ---
 const numberToWords = (num) => {
   const a = [
-    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
-    "Seventeen", "Eighteen", "Nineteen",
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
   ];
-  const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const b = [
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
+  ];
   if (num === 0) return "Zero";
   if (num < 20) return a[num];
-  if (num < 100) return b[Math.floor(num / 10)] + (num % 10 ? " " + a[num % 10] : "");
-  if (num < 1000) return a[Math.floor(num / 100)] + " Hundred" + (num % 100 ? " " + numberToWords(num % 100) : "");
-  if (num < 100000) return numberToWords(Math.floor(num / 1000)) + " Thousand " + (num % 1000 ? numberToWords(num % 1000) : "");
-  if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + " Lakh " + (num % 100000 ? numberToWords(num % 100000) : "");
-  return numberToWords(Math.floor(num / 10000000)) + " Crore " + (num % 10000000 ? numberToWords(num % 10000000) : "");
+  if (num < 100)
+    return b[Math.floor(num / 10)] + (num % 10 ? " " + a[num % 10] : "");
+  if (num < 1000)
+    return (
+      a[Math.floor(num / 100)] +
+      " Hundred" +
+      (num % 100 ? " " + numberToWords(num % 100) : "")
+    );
+  if (num < 100000)
+    return (
+      numberToWords(Math.floor(num / 1000)) +
+      " Thousand " +
+      (num % 1000 ? numberToWords(num % 1000) : "")
+    );
+  if (num < 10000000)
+    return (
+      numberToWords(Math.floor(num / 100000)) +
+      " Lakh " +
+      (num % 100000 ? numberToWords(num % 100000) : "")
+    );
+  return (
+    numberToWords(Math.floor(num / 10000000)) +
+    " Crore " +
+    (num % 10000000 ? numberToWords(num % 10000000) : "")
+  );
 };
 
 const amountToWords = (amount) => {
@@ -50,14 +98,16 @@ const Modal = ({ isOpen, onClose, onConfirm, data, isProcessing }) => {
         </h3>
         {isProcessing ? (
           <div style={{ textAlign: "center", padding: "20px" }}>
-            <div style={{
-              border: "4px solid #f3f3f3",
-              borderTop: "4px solid #3498db",
-              borderRadius: "50%",
-              width: "40px",
-              height: "40px",
-              margin: "0 auto 15px auto",
-            }}></div>
+            <div
+              style={{
+                border: "4px solid #f3f3f3",
+                borderTop: "4px solid #3498db",
+                borderRadius: "50%",
+                width: "40px",
+                height: "40px",
+                margin: "0 auto 15px auto",
+              }}
+            ></div>
             <p>Extracting bill information...</p>
           </div>
         ) : (
@@ -66,16 +116,23 @@ const Modal = ({ isOpen, onClose, onConfirm, data, isProcessing }) => {
               <strong>Bill No:</strong> <span>{data.billNo || "N/A"}</span>
             </div>
             <div style={modalStyles.dataRow}>
-              <strong>Vendor Name:</strong> <span>{data.vendorName || "N/A"}</span>
+              <strong>Vendor Name:</strong>{" "}
+              <span>{data.vendorName || "N/A"}</span>
             </div>
             <div style={modalStyles.dataRow}>
               <strong>Amount:</strong> <span>{data.amount || "N/A"}</span>
             </div>
             <div style={{ marginTop: "20px", textAlign: "right" }}>
-              <button onClick={onClose} style={{ ...modalStyles.button, backgroundColor: "#f44336" }}>
+              <button
+                onClick={onClose}
+                style={{ ...modalStyles.button, backgroundColor: "#f44336" }}
+              >
                 Cancel
               </button>
-              <button onClick={onConfirm} style={{ ...modalStyles.button, backgroundColor: "#4CAF50" }}>
+              <button
+                onClick={onConfirm}
+                style={{ ...modalStyles.button, backgroundColor: "#4CAF50" }}
+              >
                 Confirm & Add
               </button>
             </div>
@@ -127,8 +184,13 @@ const modalStyles = {
 
 // --- Local Travel Voucher Component ---
 const LocalTravelForm = ({ loggedInUser }) => {
-  const todayDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-  const generateVoucherNo = () => "LTV-" + Math.floor(1000 + Math.random() * 9000);
+  const todayDate = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const generateVoucherNo = () =>
+    "LTV-" + Math.floor(1000 + Math.random() * 9000);
 
   const initialData = {
     employeeName: loggedInUser?.name || "",
@@ -138,7 +200,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
     paymentMode: "Cash / Bank",
     projectName: "",
     ecLocation: "Pune",
-    bills: Array(10).fill().map(() => ({ billNo: "", vendorName: "", description: "", amount: "" })),
+    bills: Array(10)
+      .fill()
+      .map(() => ({ billNo: "", vendorName: "", description: "", amount: "" })),
     totalExpenses: 0,
     amtInWords: "",
     preparedBy: "",
@@ -173,7 +237,10 @@ const LocalTravelForm = ({ loggedInUser }) => {
 
   // Auto update totals
   useEffect(() => {
-    const total = formData.bills.reduce((sum, b) => sum + parseAmountValue(b.amount), 0);
+    const total = formData.bills.reduce(
+      (sum, b) => sum + parseAmountValue(b.amount),
+      0
+    );
     setFormData((prev) => ({
       ...prev,
       totalExpenses: total.toFixed(2),
@@ -182,7 +249,8 @@ const LocalTravelForm = ({ loggedInUser }) => {
   }, [formData.bills]);
 
   // Handlers
-  const handleInputChange = (field, value) => setFormData({ ...formData, [field]: value });
+  const handleInputChange = (field, value) =>
+    setFormData({ ...formData, [field]: value });
   const handleBillChange = (index, field, value) => {
     const newBills = [...formData.bills];
     newBills[index][field] = value;
@@ -205,42 +273,23 @@ const LocalTravelForm = ({ loggedInUser }) => {
       // Upload proof to server
       const formDataFile = new FormData();
       formDataFile.append("file", file);
-      const uploadRes = await axios.post("http://localhost:5000/api/uploads", formDataFile, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const uploadRes = await axios.post(
+        "http://localhost:5000/api/uploads",
+        formDataFile,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
       const filePath = uploadRes.data.filePath;
       console.log("✅ Proof uploaded successfully:", filePath);
 
-      // Run OCR
-      const { data: { text } } = await Tesseract.recognize(file, "eng", {
-        logger: (m) => console.log(m),
-      });
+      // OCR handling is now done by OCRUpload component
 
-      const lines = text.split("\n").map((l) => l.replace(/\t/g, " ").trim()).filter((l) => l);
-      
-      // Extract Bill No
-      const billNoLine = lines.find((l) => /bill\s*no|invoice\s*no|receipt\s*no/i.test(l));
-      let billNo = "";
-      if (billNoLine) {
-        const match = billNoLine.match(/[:#]\s*([A-Z0-9/-]+)/i);
-        billNo = match ? match[1] : "";
-      }
-
-      // Extract Vendor Name (usually first few lines)
-      const vendorName = lines[0] || "";
-
-      // Extract Amount
-      const amountLine = [...lines].reverse().find((l) => /total|amount|total invoive value|grand\s*total|net\s*amount/i.test(l));
-      let amount = "";
-      if (amountLine) {
-        const amountNumbers = amountLine.match(/[0-9,]+\.?[0-9]*/g);
-        if (amountNumbers) {
-          amount = parseFloat(amountNumbers[amountNumbers.length - 1].replace(/,/g, ""));
-        }
-      }
-
-      setOcrData({ billNo, vendorName, amount });
-      setProofs((prev) => [...prev, { path: filePath, billIndex: uploadCount }]);
+      // Just update proofs for this uploaded file
+      setProofs((prev) => [
+        ...prev,
+        { path: filePath, billIndex: uploadCount },
+      ]);
       setIsProcessing(false);
     } catch (err) {
       console.error("OCR Error:", err);
@@ -254,10 +303,12 @@ const LocalTravelForm = ({ loggedInUser }) => {
   };
 
   const confirmOCRData = () => {
-    handleBillChange(uploadCount, "billNo", ocrData.billNo || "");
-    handleBillChange(uploadCount, "vendorName", ocrData.vendorName || "");
-    handleBillChange(uploadCount, "amount", ocrData.amount || "");
-    setUploadCount((prev) => prev + 1);
+    if (ocrData) {
+      handleBillChange(uploadCount, "billNo", ocrData.billNo || "");
+      handleBillChange(uploadCount, "vendorName", ocrData.vendorName || "");
+      handleBillChange(uploadCount, "amount", ocrData.amount || "");
+      setUploadCount((prev) => prev + 1);
+    }
     setModalOpen(false);
     setOcrData(null);
   };
@@ -273,9 +324,13 @@ const LocalTravelForm = ({ loggedInUser }) => {
         proofs: proofs.map((p) => p.path),
       };
 
-      const res = await axios.post("http://localhost:5000/api/local-travel", payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.post(
+        "http://localhost:5000/api/local-travel",
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (res.status === 200 || res.status === 201) {
         alert("Local Travel Voucher Submitted Successfully!");
@@ -291,38 +346,208 @@ const LocalTravelForm = ({ loggedInUser }) => {
     }
   };
 
+  // Print current form (includes proofs)
+  const printRef = useRef(null);
+
+  // Print by cloning the live DOM node to preserve exact layout
+  const handlePrint = (data) => {
+    try {
+      const node = printRef.current;
+      if (!node) return alert("Print area not found");
+      const clone = node.cloneNode(true);
+
+      // Replace inputs/textarea/select in clone with plain text so printed layout wraps text
+      try {
+        const origFields = node.querySelectorAll("input,textarea,select");
+        const cloneFields = clone.querySelectorAll("input,textarea,select");
+        for (let i = 0; i < cloneFields.length; i++) {
+          const c = cloneFields[i];
+          const o = origFields[i];
+          if (!c) continue;
+          let text = "";
+          try {
+            if (o) {
+              if (o.tagName === "INPUT") {
+                const type = (o.getAttribute("type") || "").toLowerCase();
+                if (type === "checkbox" || type === "radio")
+                  text = o.checked ? "☑" : "☐";
+                else text = o.value || "";
+              } else if (o.tagName === "TEXTAREA") {
+                text = o.value || "";
+              } else if (o.tagName === "SELECT") {
+                text =
+                  (o.options[o.selectedIndex] &&
+                    o.options[o.selectedIndex].text) ||
+                  o.value ||
+                  "";
+              }
+            }
+          } catch (e) {
+            text = "";
+          }
+          const d = document.createElement("div");
+          d.textContent = text;
+          d.style.whiteSpace = "normal";
+          d.style.display = "block";
+          d.style.wordWrap = "break-word";
+          d.style.overflowWrap = "anywhere";
+          if (c.parentNode) c.parentNode.replaceChild(d, c);
+        }
+      } catch (err) {
+        console.warn("replace fields for print failed", err);
+      }
+
+      // convert proof links to images for printing
+      const anchors = clone.querySelectorAll("a");
+      anchors.forEach((a) => {
+        const href = a.getAttribute("href") || a.href || "";
+        if (!href) return;
+        if (
+          /\.(jpe?g|png|gif|webp)$/i.test(href) ||
+          /uploads/i.test(href) ||
+          href.includes("/api/uploads")
+        ) {
+          const img = document.createElement("img");
+          img.src = href.startsWith("http")
+            ? href
+            : `http://localhost:5000${href}`;
+          img.style.maxWidth = "260px";
+          img.style.display = "block";
+          img.style.margin = "6px 0";
+          if (a.parentNode) a.parentNode.replaceChild(img, a);
+        }
+      });
+
+      // Strip upload widgets and interactive controls from cloned print DOM
+      try {
+        const hideSelectors = [
+          'input[type="file"]',
+          ".uploadButton",
+          ".uploadSection",
+          ".uploadLabel",
+          ".uploadInfo",
+          ".submitSection",
+          ".submitButton",
+          ".printButton",
+        ];
+        hideSelectors.forEach((sel) =>
+          clone.querySelectorAll(sel).forEach((n) => n.remove())
+        );
+        Array.from(clone.querySelectorAll("*")).forEach((el) => {
+          try {
+            const t = (el.textContent || "").trim().toLowerCase();
+            if (!t) return;
+            if (
+              t.length < 60 &&
+              /upload\s*bill|upload\b|upload\s*proof/i.test(t)
+            )
+              el.remove();
+          } catch (e) {}
+        });
+      } catch (err) {
+        console.warn("strip UI for print failed", err);
+      }
+
+      // Put proofs on the next page (search for proof headings/containers)
+      try {
+        Array.from(clone.querySelectorAll("div,section")).forEach((el) => {
+          const t = (el.textContent || "").toLowerCase();
+          if (
+            t.includes("attached proof") ||
+            t.includes("attached proofs") ||
+            t.includes("attached proof documents") ||
+            t.includes("proof documents")
+          ) {
+            el.style.pageBreakBefore = "always";
+            el.style.breakBefore = "page";
+          }
+        });
+      } catch (err) {
+        console.warn("mark proofs for page break failed", err);
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.appendChild(clone);
+      const printStyles = `
+        <style>
+          html,body{font-family: Arial, Helvetica, sans-serif; padding:10px}
+          table{width:100%; border-collapse:collapse; table-layout:fixed}
+          th,td{word-wrap:break-word; overflow-wrap:anywhere; white-space:normal;}
+          input,textarea{white-space:normal; word-wrap:break-word; overflow-wrap:anywhere}
+          img{max-width:100%; height:auto}
+          th, td { padding: 4px !important; height: auto !important; }
+          td, th { line-height: 1.15 !important; }
+          .signCell { height: auto !important; min-height: 0 !important; }
+          input, textarea { border: none !important; }
+          @media print { input[type="file"], .uploadButton, .uploadSection, .uploadLabel, .uploadInfo, .submitSection, button { display: none !important; } }
+        </style>
+      `;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>Print - ${
+        data.voucherNo || "Voucher"
+      }</title>${printStyles}</head><body>${
+        wrapper.innerHTML
+      }<script>setTimeout(()=>window.print(),300)</script></body></html>`;
+      const w = window.open("", "_blank");
+      if (!w) return alert("Popup blocked - allow popups to print");
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+    } catch (err) {
+      console.error("Print fail", err);
+      alert("Unable to print");
+    }
+  };
+
   return (
-    <div style={styles.page}>
+    <div style={styles.page} ref={printRef}>
       <div style={styles.container}>
         {/* Upload Section */}
         <div style={styles.uploadSection}>
-          <label style={styles.uploadLabel}>
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={handleFileUpload}
-              style={{ display: "none" }}
-              disabled={uploadCount >= formData.bills.length}
-            />
-            <div style={styles.uploadButton}>
-              📄 Upload Bill (Image/PDF) - OCR Auto-Fill
-            </div>
-          </label>
-          <div style={styles.uploadInfo}>
-            Bills uploaded: {uploadCount} / {formData.bills.length}
-          </div>
-        </div>
+          <h4 style={{ margin: "0 0 10px 0", color: "#1565c0" }}>
+            📤 Upload Bill
+          </h4>
+          <OCRUpload
+            onOCRComplete={(mappedData) => {
+              // Find first empty row
+              const emptyIndex =
+                formData.bills.findIndex((b) => !b.billNo && !b.amount) || 0;
 
-        <Modal
-          isOpen={modalOpen}
-          onClose={() => {
-            setModalOpen(false);
-            setIsProcessing(false);
-          }}
-          onConfirm={confirmOCRData}
-          data={ocrData || {}}
-          isProcessing={isProcessing}
-        />
+              // mapOCRDataToForm returns normalized keys: billNumber, vendorName, amount, date, description
+              handleBillChange(
+                emptyIndex,
+                "billNo",
+                mappedData.billNumber || ""
+              );
+              handleBillChange(
+                emptyIndex,
+                "vendorName",
+                mappedData.vendorName || ""
+              );
+              handleBillChange(emptyIndex, "amount", mappedData.amount || 0);
+              handleBillChange(
+                emptyIndex,
+                "description",
+                mappedData.description || "Local Travel Expense"
+              );
+              handleBillChange(emptyIndex, "date", mappedData.date || "");
+
+              // attach proof if returned (store as object with bill index)
+              if (mappedData.proofPath) {
+                const filename = mappedData.proofPath.split("/").pop();
+                setProofs((prev) => [
+                  ...prev,
+                  {
+                    path: mappedData.proofPath,
+                    billIndex: emptyIndex,
+                    filename,
+                  },
+                ]);
+              }
+            }}
+            formType="local"
+          />
+        </div>
 
         {/* Voucher Form */}
         <table style={styles.table}>
@@ -356,7 +581,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.employeeName}
-                  onChange={(e) => handleInputChange("employeeName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("employeeName", e.target.value)
+                  }
                   style={styles.input}
                 />
               </td>
@@ -370,11 +597,15 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 />
               </td>
               <td style={styles.inputCell}>
-                <div style={{ fontSize: "10px", marginBottom: "2px" }}>Voucher No.:</div>
+                <div style={{ fontSize: "10px", marginBottom: "2px" }}>
+                  Voucher No.:
+                </div>
                 <input
                   type="text"
                   value={formData.voucherNo}
-                  onChange={(e) => handleInputChange("voucherNo", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("voucherNo", e.target.value)
+                  }
                   style={styles.input}
                 />
               </td>
@@ -387,7 +618,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.paymentDate}
-                  onChange={(e) => handleInputChange("paymentDate", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("paymentDate", e.target.value)
+                  }
                   style={styles.input}
                 />
               </td>
@@ -396,7 +629,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.paymentMode}
-                  onChange={(e) => handleInputChange("paymentMode", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("paymentMode", e.target.value)
+                  }
                   style={styles.input}
                 />
               </td>
@@ -409,7 +644,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.projectName}
-                  onChange={(e) => handleInputChange("projectName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("projectName", e.target.value)
+                  }
                   style={styles.input}
                 />
               </td>
@@ -422,7 +659,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.ecLocation}
-                  onChange={(e) => handleInputChange("ecLocation", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("ecLocation", e.target.value)
+                  }
                   style={styles.input}
                 />
               </td>
@@ -439,13 +678,18 @@ const LocalTravelForm = ({ loggedInUser }) => {
 
             {/* Bill Rows */}
             {formData.bills.map((bill, i) => (
-              <tr key={i} style={i < uploadCount ? { backgroundColor: "#e8f5e9" } : {}}>
+              <tr
+                key={i}
+                style={i < uploadCount ? { backgroundColor: "#e8f5e9" } : {}}
+              >
                 <td style={styles.cell}>{i + 1}</td>
                 <td style={styles.cell}>
                   <input
                     type="text"
                     value={bill.billNo}
-                    onChange={(e) => handleBillChange(i, "billNo", e.target.value)}
+                    onChange={(e) =>
+                      handleBillChange(i, "billNo", e.target.value)
+                    }
                     style={styles.input}
                   />
                 </td>
@@ -453,7 +697,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                   <input
                     type="text"
                     value={bill.vendorName}
-                    onChange={(e) => handleBillChange(i, "vendorName", e.target.value)}
+                    onChange={(e) =>
+                      handleBillChange(i, "vendorName", e.target.value)
+                    }
                     style={styles.input}
                   />
                 </td>
@@ -461,7 +707,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                   <input
                     type="text"
                     value={bill.description}
-                    onChange={(e) => handleBillChange(i, "description", e.target.value)}
+                    onChange={(e) =>
+                      handleBillChange(i, "description", e.target.value)
+                    }
                     style={styles.input}
                   />
                 </td>
@@ -469,7 +717,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                   <input
                     type="text"
                     value={bill.amount}
-                    onChange={(e) => handleBillChange(i, "amount", e.target.value)}
+                    onChange={(e) =>
+                      handleBillChange(i, "amount", e.target.value)
+                    }
                     style={styles.input}
                   />
                 </td>
@@ -478,10 +728,19 @@ const LocalTravelForm = ({ loggedInUser }) => {
 
             {/* Total */}
             <tr>
-              <td colSpan="4" style={{ ...styles.cell, textAlign: "right", fontWeight: "bold" }}>
+              <td
+                colSpan="4"
+                style={{
+                  ...styles.cell,
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
                 Total Rs.
               </td>
-              <td style={{ ...styles.cell, fontWeight: "bold" }}>₹ {formData.totalExpenses}</td>
+              <td style={{ ...styles.cell, fontWeight: "bold" }}>
+                ₹ {formData.totalExpenses}
+              </td>
             </tr>
 
             {/* Amount in Words */}
@@ -492,7 +751,11 @@ const LocalTravelForm = ({ loggedInUser }) => {
                   type="text"
                   value={formData.amtInWords}
                   readOnly
-                  style={{ ...styles.input, width: "calc(100% - 120px)", marginLeft: "5px" }}
+                  style={{
+                    ...styles.input,
+                    width: "calc(100% - 120px)",
+                    marginLeft: "5px",
+                  }}
                 />
               </td>
             </tr>
@@ -505,7 +768,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.preparedBy}
-                  onChange={(e) => handleInputChange("preparedBy", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("preparedBy", e.target.value)
+                  }
                   style={styles.signInput}
                   placeholder="Name"
                 />
@@ -516,7 +781,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.receiverSign}
-                  onChange={(e) => handleInputChange("receiverSign", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("receiverSign", e.target.value)
+                  }
                   style={styles.signInput}
                   placeholder="Name"
                 />
@@ -527,7 +794,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.accountsSign}
-                  onChange={(e) => handleInputChange("accountsSign", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("accountsSign", e.target.value)
+                  }
                   style={styles.signInput}
                   placeholder="Name"
                 />
@@ -538,7 +807,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                 <input
                   type="text"
                   value={formData.authorizedSignatory}
-                  onChange={(e) => handleInputChange("authorizedSignatory", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("authorizedSignatory", e.target.value)
+                  }
                   style={styles.signInput}
                   placeholder="Name"
                 />
@@ -565,7 +836,9 @@ const LocalTravelForm = ({ loggedInUser }) => {
                   >
                     View Document
                   </a>
-                  <span style={styles.proofFileName}>{proof.path.split("/").pop()}</span>
+                  <span style={styles.proofFileName}>
+                    {proof.path.split("/").pop()}
+                  </span>
                 </div>
               ))}
             </div>
@@ -576,6 +849,16 @@ const LocalTravelForm = ({ loggedInUser }) => {
         <div style={styles.submitSection}>
           <button style={styles.submitButton} onClick={handleSubmit}>
             Submit Voucher
+          </button>
+          <button
+            style={{
+              ...styles.submitButton,
+              backgroundColor: "#1976D2",
+              marginLeft: 12,
+            }}
+            onClick={() => handlePrint({ ...formData, proofs })}
+          >
+            Print
           </button>
         </div>
       </div>
@@ -619,11 +902,6 @@ const styles = {
     fontSize: "14px",
     cursor: "pointer",
     transition: "background-color 0.3s",
-  },
-  uploadInfo: {
-    marginTop: "10px",
-    fontSize: "13px",
-    color: "#666",
   },
   table: {
     width: "100%",

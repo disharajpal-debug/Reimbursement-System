@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Tesseract from "tesseract.js";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
-
-// --- pdf worker config (uses CDN) ---
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "//cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js";
+import OCRUpload from "../../components/OCRUpload";
 
 // ----------------------
 // Utilities: number -> words (Indian)
@@ -171,8 +166,10 @@ const parseInvoiceFromText = (rawText) => {
   }
 
   // 5) Amounts: prefer labeled Grand Total / Final Total / Net Amount
-  const grandTotalRx = /(?:grand\s*total|final\s*(?:amount|total)|amount\s*(?:payable|due)|net\s*(?:amount|total)|invoice\s*total|total\s*payable|balance\s*due|total\s*inclusive\s*(?:of\s*gst)?)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+\.?[0-9]*)/ig;
-  const totalRx = /(?:total\s*amount|total|sub\s*total|taxable\s*amount)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+\.?[0-9]*)/ig;
+  const grandTotalRx =
+    /(?:grand\s*total|final\s*(?:amount|total)|amount\s*(?:payable|due)|net\s*(?:amount|total)|invoice\s*total|total\s*payable|balance\s*due|total\s*inclusive\s*(?:of\s*gst)?)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+\.?[0-9]*)/gi;
+  const totalRx =
+    /(?:total\s*amount|total|sub\s*total|taxable\s*amount)\s*[:\-]?\s*(?:rs\.?|inr|₹)?\s*([0-9,]+\.?[0-9]*)/gi;
 
   const gMs = [...joined.matchAll(grandTotalRx)];
   if (gMs.length > 0) {
@@ -206,77 +203,34 @@ const parseInvoiceFromText = (rawText) => {
   return result;
 };
 
-// ----------------------
-// OCR functions
-// ----------------------
-const imageFileToCanvas = (file) =>
-  new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const MAX_DIM = 2000;
-      let { width, height } = img;
-      const scale = Math.min(1, MAX_DIM / Math.max(width, height));
-      canvas.width = Math.round(width * scale);
-      canvas.height = Math.round(height * scale);
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas);
-    };
-    img.onerror = (e) => reject(e);
+// OCR data mapping for vendor payment form
+const mapOCRDataToVendorForm = (ocrData) => {
+  // Handle data from OpenAI or regex fallback
+  const billNo =
+    ocrData.invoiceNumber || ocrData.billNumber || ocrData.billNo || "";
+  const billDate = ocrData.date || ocrData.billDate || "";
+  const amount =
+    ocrData.totalAmount || ocrData.amount || ocrData.grandTotal || "";
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      img.src = ev.target.result;
-    };
-    reader.onerror = (e) => reject(e);
-    reader.readAsDataURL(file);
-  });
-
-const pdfFileToCanvas = async (file) => {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const page = await pdf.getPage(1);
-  const viewport = page.getViewport({ scale: 1.5 });
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-  canvas.width = Math.floor(viewport.width);
-  canvas.height = Math.floor(viewport.height);
-
-  const renderContext = {
-    canvasContext: context,
-    viewport,
-  };
-  await page.render(renderContext).promise;
-  return canvas;
-};
-
-const recognizeCanvasText = async (canvas, onProgress) => {
-  const { data } = await Tesseract.recognize(canvas, "eng", {
-    logger: (m) => {
-      if (onProgress) onProgress(m);
-    },
-  });
-  return data.text || "";
-};
-
-const extractTextFromFile = async (file, onProgress) => {
-  try {
-    let canvas;
-    if (file.type === "application/pdf" || file.name.match(/\.pdf$/i)) {
-      canvas = await pdfFileToCanvas(file);
-    } else {
-      canvas = await imageFileToCanvas(file);
-    }
-
-    const text = await recognizeCanvasText(canvas, onProgress);
-    const parsed = parseInvoiceFromText(text);
-    parsed._ocrRaw = text;
-    return parsed;
-  } catch (err) {
-    console.error("OCR error", err);
-    throw err;
+  let description = "";
+  if (
+    ocrData.items &&
+    Array.isArray(ocrData.items) &&
+    ocrData.items.length > 0
+  ) {
+    description = ocrData.items
+      .map((item) => item.description || item)
+      .join(", ");
+  } else {
+    description = `Payment for bill ${billNo || ""}`.trim();
   }
+
+  return {
+    billNo,
+    billDate,
+    amount,
+    description,
+  };
 };
 
 // ----------------------
@@ -315,22 +269,61 @@ const Modal = ({ isOpen, onClose, onConfirm, data }) => {
             </span>
           </div>
 
-          <div style={{ marginTop: 12, fontSize: 12, color: "#444", background: "#fafafa", padding: 8, borderRadius: 4 }}>
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 12,
+              color: "#444",
+              background: "#fafafa",
+              padding: 8,
+              borderRadius: 4,
+            }}
+          >
             <strong>Raw OCR (short):</strong>
-            <pre style={{ whiteSpace: "pre-wrap", fontSize: 11, maxHeight: 160, overflow: "auto" }}>
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                fontSize: 11,
+                maxHeight: 160,
+                overflow: "auto",
+              }}
+            >
               {String(data._ocrRaw || "").slice(0, 1500)}
               {String(data._ocrRaw || "").length > 1500 ? "..." : ""}
             </pre>
           </div>
         </div>
 
-        <div style={{ backgroundColor: "#fff3cd", padding: 10, borderRadius: 4, border: "1px solid #ffc107", marginBottom: 12 }}>
-          ⚠️ <strong>Note:</strong> Verify before confirming. You can edit fields after confirmation.
+        <div
+          style={{
+            backgroundColor: "#fff3cd",
+            padding: 10,
+            borderRadius: 4,
+            border: "1px solid #ffc107",
+            marginBottom: 12,
+          }}
+        >
+          ⚠️ <strong>Note:</strong> Verify before confirming. You can edit
+          fields after confirmation.
         </div>
 
         <div style={{ textAlign: "right", marginTop: 8 }}>
-          <button onClick={onClose} style={{ ...modalStyles.button, backgroundColor: "#6c757d", marginRight: 8 }}>Cancel</button>
-          <button onClick={onConfirm} style={{ ...modalStyles.button, backgroundColor: "#28a745" }}>✓ Confirm & Use Data</button>
+          <button
+            onClick={onClose}
+            style={{
+              ...modalStyles.button,
+              backgroundColor: "#6c757d",
+              marginRight: 8,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ ...modalStyles.button, backgroundColor: "#28a745" }}
+          >
+            ✓ Confirm & Use Data
+          </button>
         </div>
       </div>
     </div>
@@ -385,7 +378,8 @@ const VendorPaymentForm = () => {
     month: "short",
     year: "numeric",
   });
-  const generateVoucherNo = () => "VP-" + Math.floor(1000 + Math.random() * 9000);
+  const generateVoucherNo = () =>
+    "VP-" + Math.floor(1000 + Math.random() * 9000);
 
   const initialData = {
     vendorName: "",
@@ -413,7 +407,10 @@ const VendorPaymentForm = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [proofFiles, setProofFiles] = useState([]);
   const [pendingFile, setPendingFile] = useState(null);
+  const [pendingFilePath, setPendingFilePath] = useState(null);
   const [ocrProgress, setOcrProgress] = useState(null);
+
+  const printRef = React.useRef(null);
 
   // Compute totals when bills change
   useEffect(() => {
@@ -439,31 +436,7 @@ const VendorPaymentForm = () => {
     });
   };
 
-  // OCR Upload handler
-  const handleOCRUpload = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    setPendingFile(file);
-    setIsProcessing(true);
-    setOcrProgress(null);
-
-    try {
-      const parsed = await extractTextFromFile(file, (m) => {
-        setOcrProgress(m);
-      });
-
-      setOcrData(parsed);
-      const emptyIndex = formData.bills.findIndex((b) => !b.billNo && !b.amount);
-      setCurrentBillIndex(emptyIndex !== -1 ? emptyIndex : formData.bills.length - 1);
-      setModalOpen(true);
-    } catch (err) {
-      console.error(err);
-      alert("OCR failed. See console for details.");
-      setPendingFile(null);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  // handleOCRUpload is now handled by the OCRUpload component
 
   // Confirm OCR and autofill
   const confirmOCRData = () => {
@@ -472,27 +445,20 @@ const VendorPaymentForm = () => {
       return;
     }
 
+    // Map OCR data to form fields
+    const mappedBillData = mapOCRDataToVendorForm(ocrData);
+
     // Update form data in a single state update to avoid multiple renders
     setFormData((prev) => {
       const newBills = [...prev.bills];
       newBills[currentBillIndex] = {
         ...newBills[currentBillIndex],
-        billNo: ocrData.billNo || "",
-        billDate: ocrData.billDate || "",
-        amount: ocrData.grandTotal || ocrData.amount || "",
-        description: ocrData.hotelName
-          ? ocrData.hotelName === (ocrData.vendorName || ocrData.organizationName || "")
-            ? `Payment for bill ${ocrData.billNo || ""}`
-            : `Payment to ${ocrData.hotelName}`
-          : `Payment for bill ${ocrData.billNo || ""}`,
+        ...mappedBillData,
       };
-
-      // Always update vendorName with OCR data
-      const vendorToUse = ocrData.vendorName || ocrData.organizationName || ocrData.hotelName || prev.vendorName;
 
       return {
         ...prev,
-        vendorName: vendorToUse,
+        vendorName: ocrData.vendorName || prev.vendorName,
         bills: newBills,
       };
     });
@@ -502,9 +468,11 @@ const VendorPaymentForm = () => {
       setProofFiles((prev) => [
         ...prev,
         {
-          file: pendingFile,
-          name: pendingFile.name,
-          url: URL.createObjectURL(pendingFile),
+          fileName: pendingFile.name,
+          path: pendingFilePath || null,
+          url: pendingFilePath
+            ? `http://localhost:5000${pendingFilePath}`
+            : URL.createObjectURL(pendingFile),
           billIndex: currentBillIndex,
           extractedData: ocrData,
         },
@@ -533,83 +501,323 @@ const VendorPaymentForm = () => {
 
     const submissionData = {
       ...formData,
-      proofs: proofFiles.map((p) => ({ fileName: p.name, billIndex: p.billIndex })),
+      proofs: proofFiles.map((p) => p.path || p.url).filter(Boolean),
     };
 
-    console.log("Form Data with Proofs:", submissionData);
-    alert("Vendor Payment Voucher submitted successfully!");
-
-    setFormData(initialData);
-    setProofFiles([]);
+    // POST to backend with Authorization header
+    (async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:5000/api/vendor-payments", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : undefined,
+          },
+          body: JSON.stringify(submissionData),
+        });
+        const json = await res.json();
+        if (res.ok && json.success) {
+          alert("Vendor Payment Voucher submitted successfully!");
+          setFormData(initialData);
+          setProofFiles([]);
+        } else {
+          console.error("Vendor submit failed:", json);
+          alert("Submission failed: " + (json.error || JSON.stringify(json)));
+        }
+      } catch (err) {
+        console.error("Submit error:", err);
+        alert("Error submitting vendor payment: " + (err.message || err));
+      }
+    })();
   };
 
+  // Print helper: clone DOM to preserve exact layout and inline images for proofs
+  const handlePrint = (data) => {
+    try {
+      const node = printRef.current;
+      if (!node) return alert("Print area not found");
+      const clone = node.cloneNode(true);
+
+      // Replace inputs/selects/textareas in clone with plain text elements so printed text wraps
+      try {
+        const origFields = node.querySelectorAll("input,textarea,select");
+        const cloneFields = clone.querySelectorAll("input,textarea,select");
+        for (let i = 0; i < cloneFields.length; i++) {
+          const c = cloneFields[i];
+          const o = origFields[i];
+          if (!c) continue;
+          let text = "";
+          try {
+            if (o) {
+              if (o.tagName === "INPUT") {
+                const type = (o.getAttribute("type") || "").toLowerCase();
+                text =
+                  type === "checkbox" || type === "radio"
+                    ? o.checked
+                      ? "☑"
+                      : "☐"
+                    : o.value || "";
+              } else if (o.tagName === "TEXTAREA") {
+                text = o.value || "";
+              } else if (o.tagName === "SELECT") {
+                text =
+                  (o.options[o.selectedIndex] &&
+                    o.options[o.selectedIndex].text) ||
+                  o.value ||
+                  "";
+              }
+            }
+          } catch (e) {
+            text = "";
+          }
+          const el = document.createElement("div");
+          el.textContent = text;
+          el.style.whiteSpace = "normal";
+          el.style.display = "block";
+          el.style.wordWrap = "break-word";
+          el.style.overflowWrap = "anywhere";
+          if (c.parentNode) c.parentNode.replaceChild(el, c);
+        }
+      } catch (err) {
+        console.warn("replace fields for print failed", err);
+      }
+
+      const anchors = clone.querySelectorAll("a");
+      anchors.forEach((a) => {
+        const href = a.getAttribute("href") || a.href || "";
+        if (!href) return;
+        if (
+          /\.(jpe?g|png|gif|webp)$/i.test(href) ||
+          /uploads/i.test(href) ||
+          href.includes("/api/uploads")
+        ) {
+          const img = document.createElement("img");
+          img.src = href.startsWith("http")
+            ? href
+            : `http://localhost:5000${href}`;
+          img.style.maxWidth = "260px";
+          img.style.display = "block";
+          img.style.margin = "6px 0";
+          if (a.parentNode) a.parentNode.replaceChild(img, a);
+        }
+      });
+      // Remove any interactive/upload UI from clone before printing and remove small 'upload' headings
+      try {
+        const hideSelectors = [
+          'input[type="file"]',
+          ".uploadButton",
+          ".uploadSection",
+          ".uploadLabel",
+          ".uploadInfo",
+          ".submitSection",
+          ".submitButton",
+          ".printButton",
+        ];
+        hideSelectors.forEach((sel) =>
+          clone.querySelectorAll(sel).forEach((n) => n.remove())
+        );
+        Array.from(clone.querySelectorAll("*")).forEach((el) => {
+          try {
+            const t = (el.textContent || "").trim().toLowerCase();
+            if (!t) return;
+            if (
+              t.length < 60 &&
+              /upload\s*bill|upload\b|upload\s*proof/i.test(t)
+            )
+              el.remove();
+          } catch (e) {}
+        });
+      } catch (err) {
+        console.warn("failed to strip UI for print", err);
+      }
+
+      // Mark proofs container(s) to start on a new page
+      try {
+        Array.from(clone.querySelectorAll("div,section")).forEach((el) => {
+          const t = (el.textContent || "").toLowerCase();
+          if (
+            t.includes("attached proof") ||
+            t.includes("attached proofs") ||
+            t.includes("attached proof documents") ||
+            t.includes("proof documents")
+          ) {
+            el.style.pageBreakBefore = "always";
+            el.style.breakBefore = "page";
+          }
+        });
+      } catch (err) {
+        console.warn("mark proofs for break failed", err);
+      }
+      const wrapper = document.createElement("div");
+      wrapper.appendChild(clone);
+      const printStyles = `
+        <style>
+          html,body{font-family: Arial, Helvetica, sans-serif; padding:10px}
+          table{width:100%; border-collapse:collapse; table-layout:fixed}
+          th,td{word-wrap:break-word; overflow-wrap:anywhere; white-space:normal}
+          input,textarea{white-space:normal; word-wrap:break-word; overflow-wrap:anywhere}
+          img{max-width:100%; height:auto}
+          th, td { padding: 4px !important; height: auto !important; }
+          td, th { line-height: 1.15 !important; }
+          .signCell { height: auto !important; min-height: 0 !important; }
+          input, textarea { border: none !important; }
+          @media print { input[type="file"], .uploadButton, .uploadSection, .uploadLabel, .uploadInfo, .submitSection, button { display: none !important; } }
+        </style>
+      `;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>Print - ${
+        data.voucherNo || "Voucher"
+      }</title>${printStyles}</head><body>${
+        wrapper.innerHTML
+      }<script>setTimeout(()=>window.print(),300)</script></body></html>`;
+      const w = window.open("", "_blank");
+      if (!w) return alert("Popup blocked - allow popups to print");
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+    } catch (err) {
+      console.error("Print error", err);
+      alert("Unable to print");
+    }
+  };
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif", backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", backgroundColor: "#fff", padding: "30px", boxShadow: "0 0 10px rgba(0,0,0,0.1)" }}>
+    <div
+      style={{
+        padding: "20px",
+        fontFamily: "Arial, sans-serif",
+        backgroundColor: "#f5f5f5",
+        minHeight: "100vh",
+      }}
+    >
+      <div
+        ref={printRef}
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          backgroundColor: "#fff",
+          padding: "30px",
+          boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+        }}
+      >
         {/* OCR Upload Section */}
-        <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#e3f2fd", borderRadius: "5px", border: "1px solid #2196f3" }}>
-          <h4 style={{ margin: "0 0 10px 0", color: "#1565c0" }}>📤 Upload Bill for OCR Processing</h4>
-          <p style={{ fontSize: "12px", color: "#666", margin: "5px 0 10px 0" }}>
-            Upload a bill/invoice image or PDF. The system will attempt to extract:
-            <br />
-            <strong>Vendor/Organization Name, Hotel Name, Invoice Number, Bill Date, Grand Total/Amount</strong>
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "15px",
+            backgroundColor: "#e3f2fd",
+            borderRadius: "5px",
+            border: "1px solid #2196f3",
+          }}
+        >
+          <h4 style={{ margin: "0 0 10px 0", color: "#1565c0" }}>
+            📤 Upload Bill for OCR Processing
+          </h4>
+          <p
+            style={{ fontSize: "12px", color: "#666", margin: "5px 0 10px 0" }}
+          >
+            Upload a bill/invoice image to automatically extract vendor details.
           </p>
 
-          <input type="file" accept="image/*,.pdf" onChange={handleOCRUpload} style={{ padding: 8, fontSize: 14 }} disabled={isProcessing} />
-          {isProcessing && (
-            <div style={{ marginTop: 8 }}>
-              <span style={{ color: "#2196F3", fontSize: 14 }}>⏳ Processing OCR... </span>
-              {ocrProgress && ocrProgress.status && (
-                <span style={{ color: "#666", marginLeft: 10 }}>
-                  {ocrProgress.status} {ocrProgress.progress ? `(${Math.round(ocrProgress.progress*100)}%)` : ""}
-                </span>
-              )}
-            </div>
-          )}
+          <OCRUpload
+            onOCRComplete={(ocrData) => {
+              // When OCR is done, show the confirmation modal
+              setOcrData(ocrData);
+              // Save server-saved proof path so it can be attached after confirmation
+              if (ocrData.proofPath) setPendingFilePath(ocrData.proofPath);
+              const emptyIndex = formData.bills.findIndex(
+                (b) => !b.billNo && !b.amount
+              );
+              setCurrentBillIndex(
+                emptyIndex !== -1 ? emptyIndex : formData.bills.length - 1
+              );
+              setModalOpen(true);
+            }}
+            formType="vendor"
+          />
         </div>
 
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} onConfirm={confirmOCRData} data={ocrData || {}} />
+        <Modal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onConfirm={confirmOCRData}
+          data={ocrData || {}}
+        />
 
         {/* Main Form Table */}
         <table style={styles.table}>
           <thead>
             <tr>
-              <th colSpan="6" style={styles.headerMain}>SAMARTH UDYOG TECHNOLOGY FORUM</th>
+              <th colSpan="6" style={styles.headerMain}>
+                SAMARTH UDYOG TECHNOLOGY FORUM
+              </th>
             </tr>
             <tr>
               <td colSpan="6" style={styles.headerSub}>
-                CIN: U74999PN2017NPL172629<br />
-                Registered Office: Ground Floor, SPPU Research Park Foundation,<br />
+                CIN: U74999PN2017NPL172629
+                <br />
+                Registered Office: Ground Floor, SPPU Research Park Foundation,
+                <br />
                 Savitribai Phule Pune University, Ganeshkhind, Pune - 411 007
               </td>
             </tr>
             <tr>
-              <th colSpan="6" style={styles.headerTitle}>Vendor Payment Vouchers</th>
+              <th colSpan="6" style={styles.headerTitle}>
+                Vendor Payment Vouchers
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td style={styles.labelCell}>Vendor Name :</td>
               <td colSpan="3" style={styles.inputCell}>
-                <input type="text" value={formData.vendorName} onChange={(e) => handleInputChange("vendorName", e.target.value)} style={styles.input} placeholder="Enter vendor name" />
+                <input
+                  type="text"
+                  value={formData.vendorName}
+                  onChange={(e) =>
+                    handleInputChange("vendorName", e.target.value)
+                  }
+                  style={styles.input}
+                  placeholder="Enter vendor name"
+                />
               </td>
               <td style={styles.labelCell}>Date :</td>
               <td style={styles.inputCell}>
-                <input type="text" value={formData.date} onChange={(e) => handleInputChange("date", e.target.value)} style={styles.input} />
+                <input
+                  type="text"
+                  value={formData.date}
+                  onChange={(e) => handleInputChange("date", e.target.value)}
+                  style={styles.input}
+                />
               </td>
             </tr>
 
             <tr>
               <td style={styles.labelCell}>Project Name :</td>
               <td colSpan="5" style={styles.inputCell}>
-                <input type="text" value={formData.projectName} onChange={(e) => handleInputChange("projectName", e.target.value)} style={styles.input} placeholder="Enter project name" />
+                <input
+                  type="text"
+                  value={formData.projectName}
+                  onChange={(e) =>
+                    handleInputChange("projectName", e.target.value)
+                  }
+                  style={styles.input}
+                  placeholder="Enter project name"
+                />
               </td>
             </tr>
 
             <tr>
               <td style={styles.labelCell}>EC Location :</td>
               <td colSpan="5" style={styles.inputCell}>
-                <input type="text" value={formData.ecLocation} onChange={(e) => handleInputChange("ecLocation", e.target.value)} style={styles.input} />
+                <input
+                  type="text"
+                  value={formData.ecLocation}
+                  onChange={(e) =>
+                    handleInputChange("ecLocation", e.target.value)
+                  }
+                  style={styles.input}
+                />
               </td>
             </tr>
 
@@ -617,7 +825,9 @@ const VendorPaymentForm = () => {
               <th style={styles.thCellSrNo}>Sr No.</th>
               <th style={styles.thCellBillNo}>Bill No</th>
               <th style={styles.thCellBillDate}>Bill Date</th>
-              <th colSpan="2" style={styles.thCellDescription}>Description</th>
+              <th colSpan="2" style={styles.thCellDescription}>
+                Description
+              </th>
               <th style={styles.thCellAmount}>Amount</th>
             </tr>
 
@@ -625,93 +835,275 @@ const VendorPaymentForm = () => {
               <tr key={i}>
                 <td style={styles.cell}>{i + 1}</td>
                 <td style={styles.cell}>
-                  <input type="text" value={bill.billNo} onChange={(e) => handleBillChange(i, "billNo", e.target.value)} style={styles.inputSmall} />
+                  <input
+                    type="text"
+                    value={bill.billNo}
+                    onChange={(e) =>
+                      handleBillChange(i, "billNo", e.target.value)
+                    }
+                    style={styles.inputSmall}
+                  />
                 </td>
                 <td style={styles.cell}>
-                  <input type="text" value={bill.billDate} onChange={(e) => handleBillChange(i, "billDate", e.target.value)} style={styles.inputSmall} placeholder="dd-mmm-yy" />
+                  <input
+                    type="text"
+                    value={bill.billDate}
+                    onChange={(e) =>
+                      handleBillChange(i, "billDate", e.target.value)
+                    }
+                    style={styles.inputSmall}
+                    placeholder="dd-mmm-yy"
+                  />
                 </td>
                 <td colSpan="2" style={styles.cell}>
-                  <input type="text" value={bill.description} onChange={(e) => handleBillChange(i, "description", e.target.value)} style={styles.inputSmall} />
+                  <input
+                    type="text"
+                    value={bill.description}
+                    onChange={(e) =>
+                      handleBillChange(i, "description", e.target.value)
+                    }
+                    style={styles.inputSmall}
+                  />
                 </td>
                 <td style={styles.cell}>
-                  <input type="text" value={bill.amount} onChange={(e) => handleBillChange(i, "amount", e.target.value)} style={styles.inputSmall} />
+                  <input
+                    type="text"
+                    value={bill.amount}
+                    onChange={(e) =>
+                      handleBillChange(i, "amount", e.target.value)
+                    }
+                    style={styles.inputSmall}
+                  />
                 </td>
               </tr>
             ))}
 
             <tr>
-              <td colSpan="5" style={{ ...styles.cell, textAlign: "right", fontWeight: "bold" }}>Total Rs.</td>
-              <td style={{ ...styles.cell, fontWeight: "bold", fontSize: "14px" }}>{formData.totalExpenses.toFixed(2)}</td>
+              <td
+                colSpan="5"
+                style={{
+                  ...styles.cell,
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
+                Total Rs.
+              </td>
+              <td
+                style={{ ...styles.cell, fontWeight: "bold", fontSize: "14px" }}
+              >
+                {formData.totalExpenses.toFixed(2)}
+              </td>
             </tr>
 
             <tr>
               <td style={styles.labelCell}>Amt. in Words :</td>
               <td colSpan="5" style={styles.inputCell}>
-                <input type="text" value={formData.amtInWords} readOnly style={{ ...styles.input, backgroundColor: "#f9f9f9" }} />
+                <input
+                  type="text"
+                  value={formData.amtInWords}
+                  readOnly
+                  style={{ ...styles.input, backgroundColor: "#f9f9f9" }}
+                />
               </td>
             </tr>
 
             <tr>
-              <td rowSpan="2" style={styles.labelCell}>Payment Details<br />- Cheque/Online</td>
-              <td colSpan="3" style={styles.labelCell}>Voucher No.:</td>
+              <td rowSpan="2" style={styles.labelCell}>
+                Payment Details
+                <br />- Cheque/Online
+              </td>
+              <td colSpan="3" style={styles.labelCell}>
+                Voucher No.:
+              </td>
               <td colSpan="2" style={styles.inputCell}>
-                <input type="text" value={formData.voucherNo} readOnly style={styles.input} />
+                <input
+                  type="text"
+                  value={formData.voucherNo}
+                  readOnly
+                  style={styles.input}
+                />
               </td>
             </tr>
             <tr>
-              <td colSpan="3" style={styles.labelCell}>Payment Date:</td>
+              <td colSpan="3" style={styles.labelCell}>
+                Payment Date:
+              </td>
               <td colSpan="2" style={styles.inputCell}>
-                <input type="text" value={formData.paymentDate} onChange={(e) => handleInputChange("paymentDate", e.target.value)} style={styles.input} placeholder="dd-mmm-yy" />
+                <input
+                  type="text"
+                  value={formData.paymentDate}
+                  onChange={(e) =>
+                    handleInputChange("paymentDate", e.target.value)
+                  }
+                  style={styles.input}
+                  placeholder="dd-mmm-yy"
+                />
               </td>
             </tr>
 
             <tr>
-              <td colSpan="6" style={{ ...styles.cell, height: "60px" }}>&nbsp;</td>
+              <td colSpan="6" style={{ ...styles.cell, height: "60px" }}>
+                &nbsp;
+              </td>
             </tr>
 
             <tr>
               <td style={styles.signCell}>
-                <strong>Prepared By - Name & Sign</strong><br />
-                <input type="text" value={formData.preparedBy} onChange={(e) => handleInputChange("preparedBy", e.target.value)} style={styles.inputSmall} placeholder="Name" />
+                <strong>Prepared By - Name & Sign</strong>
+                <br />
+                <input
+                  type="text"
+                  value={formData.preparedBy}
+                  onChange={(e) =>
+                    handleInputChange("preparedBy", e.target.value)
+                  }
+                  style={styles.inputSmall}
+                  placeholder="Name"
+                />
               </td>
               <td colSpan="2" style={styles.signCell}>
-                <strong>Receiver's Signature</strong><br />
-                <input type="text" value={formData.receiverSign} onChange={(e) => handleInputChange("receiverSign", e.target.value)} style={styles.inputSmall} />
+                <strong>Receiver's Signature</strong>
+                <br />
+                <input
+                  type="text"
+                  value={formData.receiverSign}
+                  onChange={(e) =>
+                    handleInputChange("receiverSign", e.target.value)
+                  }
+                  style={styles.inputSmall}
+                />
               </td>
               <td colSpan="2" style={styles.signCell}>
-                <strong>Accounts - Name & Sign</strong><br />
-                <input type="text" value={formData.accountsSign} onChange={(e) => handleInputChange("accountsSign", e.target.value)} style={styles.inputSmall} />
+                <strong>Accounts - Name & Sign</strong>
+                <br />
+                <input
+                  type="text"
+                  value={formData.accountsSign}
+                  onChange={(e) =>
+                    handleInputChange("accountsSign", e.target.value)
+                  }
+                  style={styles.inputSmall}
+                />
               </td>
               <td style={styles.signCell}>
-                <strong>Authorised Signatory</strong><br />
-                <input type="text" value={formData.authorizedSignatory} onChange={(e) => handleInputChange("authorizedSignatory", e.target.value)} style={styles.inputSmall} />
+                <strong>Authorised Signatory</strong>
+                <br />
+                <input
+                  type="text"
+                  value={formData.authorizedSignatory}
+                  onChange={(e) =>
+                    handleInputChange("authorizedSignatory", e.target.value)
+                  }
+                  style={styles.inputSmall}
+                />
               </td>
             </tr>
           </tbody>
         </table>
 
         <div style={{ marginTop: 30, textAlign: "center" }}>
-          <button onClick={handleSubmit} style={{ padding: "12px 30px", fontSize: 16, cursor: "pointer", backgroundColor: "#4CAF50", color: "#fff", border: "none", borderRadius: 5, fontWeight: 500 }}>
+          <button
+            onClick={handleSubmit}
+            style={{
+              padding: "12px 30px",
+              fontSize: 16,
+              cursor: "pointer",
+              backgroundColor: "#4CAF50",
+              color: "#fff",
+              border: "none",
+              borderRadius: 5,
+              fontWeight: 500,
+            }}
+          >
             Submit Voucher
+          </button>
+          <button
+            onClick={() => handlePrint({ ...formData, proofs: proofFiles })}
+            style={{
+              padding: "12px 30px",
+              fontSize: 16,
+              cursor: "pointer",
+              backgroundColor: "#1976D2",
+              color: "#fff",
+              border: "none",
+              borderRadius: 5,
+              fontWeight: 500,
+              marginLeft: 12,
+            }}
+          >
+            Print
           </button>
         </div>
 
         {proofFiles.length > 0 && (
-          <div style={{ marginTop: 30, padding: 20, backgroundColor: "#f9f9f9", borderRadius: 8, border: "2px solid #4CAF50" }}>
-            <h4 style={{ margin: "0 0 15px 0", fontSize: 16, fontWeight: "bold", color: "#333", borderBottom: "2px solid #4CAF50", paddingBottom: 10 }}>
+          <div
+            style={{
+              marginTop: 30,
+              padding: 20,
+              backgroundColor: "#f9f9f9",
+              borderRadius: 8,
+              border: "2px solid #4CAF50",
+            }}
+          >
+            <h4
+              style={{
+                margin: "0 0 15px 0",
+                fontSize: 16,
+                fontWeight: "bold",
+                color: "#333",
+                borderBottom: "2px solid #4CAF50",
+                paddingBottom: 10,
+              }}
+            >
               📎 Attached Proof Documents ({proofFiles.length})
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {proofFiles.map((proof, index) => (
-                <div key={index} style={{ display: "flex", alignItems: "center", gap: 15, padding: 12, backgroundColor: "#fff", borderRadius: 6, border: "1px solid #ddd", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 15,
+                    padding: 12,
+                    backgroundColor: "#fff",
+                    borderRadius: 6,
+                    border: "1px solid #ddd",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
                   <span style={{ fontSize: 24, minWidth: 30 }}>📄</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: "#333", marginBottom: 4 }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 14,
+                        color: "#333",
+                        marginBottom: 4,
+                      }}
+                    >
                       Bill #{proof.billIndex + 1} - {proof.name}
                     </div>
-                    <div style={{ fontSize: 12, color: "#666" }}>Uploaded proof for bill entry {proof.billIndex + 1}</div>
+                    <div style={{ fontSize: 12, color: "#666" }}>
+                      Uploaded proof for bill entry {proof.billIndex + 1}
+                    </div>
                   </div>
-                  <a href={proof.url} target="_blank" rel="noreferrer" style={{ padding: "8px 16px", backgroundColor: "#2196F3", color: "#fff", textDecoration: "none", borderRadius: 4, fontSize: 13, fontWeight: 500, whiteSpace: "nowrap" }}>
+                  <a
+                    href={proof.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: "#2196F3",
+                      color: "#fff",
+                      textDecoration: "none",
+                      borderRadius: 4,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     View Document
                   </a>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../../utils/api";
 import CashPaymentForm from "../../shared/forms/CashPaymentForm";
 import LocalTravelForm from "../../shared/forms/LocalTravelForm";
 import OutstationTravelForm from "../../shared/forms/OutstationTravelForm";
@@ -18,7 +18,7 @@ const EmployeeHome = () => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
-  const token = localStorage.getItem("token");
+  // token and headers are handled by API interceptor
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -26,19 +26,19 @@ const EmployeeHome = () => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           setEmployee(JSON.parse(storedUser));
-        } else if (token) {
-          const res = await axios.get("http://localhost:5000/api/users/me", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setEmployee(res.data);
-          localStorage.setItem("user", JSON.stringify(res.data));
+        } else {
+          const res = await API.get("/users/me");
+          const data = res.data;
+          const userObj = data?.data || data;
+          setEmployee(userObj);
+          localStorage.setItem("user", JSON.stringify(userObj));
         }
       } catch (err) {
         console.error("Error fetching employee info:", err);
       }
     };
     fetchEmployee();
-  }, [token]);
+  }, []);
 
   const formTypeLabel = (formType) => {
     const map = {
@@ -63,16 +63,9 @@ const EmployeeHome = () => {
     const fetchDashboardStats = async () => {
       setLoadingStats(true);
       try {
-        if (!token) return;
-        const res = await axios.get(
-          "http://localhost:5000/api/employee/dashboard-stats",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (res.data.success) {
-          setDashboardStats(res.data.data);
-        }
+        const res = await API.get("/employee/dashboard-stats");
+        const data = res.data;
+        if (data?.success) setDashboardStats(data.data || null);
       } catch (err) {
         console.error("Error fetching dashboard stats:", err);
       } finally {
@@ -80,7 +73,7 @@ const EmployeeHome = () => {
       }
     };
     fetchDashboardStats();
-  }, [token]);
+  }, []);
 
   // FETCH ALL REQUESTS - USING UPDATED ENDPOINTS
   useEffect(() => {
@@ -88,8 +81,6 @@ const EmployeeHome = () => {
       setLoadingRequests(true);
       setFetchError(null);
       try {
-        if (!token) return;
-
         const [
           reimbursements,
           cashPayments,
@@ -98,36 +89,16 @@ const EmployeeHome = () => {
           vendorPayments,
           vouchers,
         ] = await Promise.all([
-          axios
-            .get("http://localhost:5000/api/reimbursements/myrequests", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .catch(() => ({ data: [] })),
-          axios
-            .get("http://localhost:5000/api/cash-payment/my-payments", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .catch(() => ({ data: [] })),
-          axios
-            .get("http://localhost:5000/api/local-travel", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .catch(() => ({ data: { data: [] } })),
-          axios
-            .get("http://localhost:5000/api/outstation-travel", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .catch(() => ({ data: { data: [] } })),
-          axios
-            .get("http://localhost:5000/api/vendor-payments/my-payments", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .catch(() => ({ data: { data: [] } })),
-          axios
-            .get("http://localhost:5000/api/vouchers/my-vouchers", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .catch(() => ({ data: { data: [] } })),
+          API.get("/reimbursements/myrequests").catch(() => ({ data: [] })),
+          API.get("/cash-payment/my-payments").catch(() => ({ data: [] })),
+          API.get("/local-travel").catch(() => ({ data: { data: [] } })),
+          API.get("/outstation-travel").catch(() => ({ data: { data: [] } })),
+          API.get("/vendor-payments/my-payments").catch(() => ({
+            data: { data: [] },
+          })),
+          API.get("/vouchers/my-vouchers").catch(() => ({
+            data: { data: [] },
+          })),
         ]);
 
         const safeArray = (res) => {
@@ -200,7 +171,7 @@ const EmployeeHome = () => {
     };
 
     fetchAllEmployeeRequests();
-  }, [token]);
+  }, []);
 
   // ENHANCED PROOF DETECTION - COVERS ALL FORMS
   const getProofsCount = (req) => {
@@ -360,32 +331,36 @@ const EmployeeHome = () => {
         >
           {[
             {
+              id: "total",
               label: "Total Requests",
               value: requests.length,
               color: "#2c3e50",
               icon: "📋",
             },
             {
+              id: "pending",
               label: "Pending",
               value: pendingRequests.length,
               color: "#e67e22",
               icon: "⏳",
             },
             {
+              id: "approved",
               label: "Approved",
               value: approvedRequests.length,
               color: "#28a745",
               icon: "✅",
             },
             {
+              id: "rejected",
               label: "Rejected",
               value: rejectedRequests.length,
               color: "#dc3545",
               icon: "❌",
             },
-          ].map((stat, i) => (
+          ].map((stat) => (
             <div
-              key={i}
+              key={stat.id}
               style={{
                 flex: 1,
                 minWidth: 180,
@@ -428,26 +403,29 @@ const EmployeeHome = () => {
         >
           {[
             {
+              id: "totalAmount",
               label: "Total Amount",
               value: `₹${totalAmount.toLocaleString("en-IN")}`,
               color: "#2c3e50",
               icon: "💰",
             },
             {
+              id: "pendingAmount",
               label: "Pending Amount",
               value: `₹${pendingAmount.toLocaleString("en-IN")}`,
               color: "#e67e22",
               icon: "⏳",
             },
             {
+              id: "approvedAmount",
               label: "Approved Amount",
               value: `₹${approvedAmount.toLocaleString("en-IN")}`,
               color: "#28a745",
               icon: "✅",
             },
-          ].map((stat, i) => (
+          ].map((stat) => (
             <div
-              key={i}
+              key={stat.id}
               style={{
                 flex: 1,
                 minWidth: 200,

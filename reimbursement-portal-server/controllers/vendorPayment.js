@@ -17,27 +17,23 @@ exports.createVendorPaymentRequest = async (req, res) => {
       userId: user.id,
       status: "pending",
       manager_status: "pending",
-      admin_status: "pending"
+      admin_status: "pending",
     });
 
-    // Create Voucher for approval workflow
-    try {
-      await createVoucherFromForm(formData, "vendor_payment", user.id, user.name);
-    } catch (voucherError) {
-      console.error("Error creating voucher for vendor payment:", voucherError);
-      // Don’t block main request if voucher creation fails
-    }
+    // NOTE: Do not auto-create a Voucher here — saving both a VendorPayment and
+    // a Voucher causes duplicated requests. Voucher creation should be explicit
+    // or handled by a single controller responsible for approval workflows.
 
     res.status(201).json({
       success: true,
       message: "Vendor payment request submitted successfully",
-      data: vendorPayment
+      data: vendorPayment,
     });
   } catch (err) {
     console.error("createVendorPaymentRequest err:", err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
@@ -55,9 +51,9 @@ exports.getVendorPaymentRequests = async (req, res) => {
     } else if (user.role === "manager") {
       const teamMembers = await User.findAll({
         where: { managerId: user.id },
-        attributes: ["id"]
+        attributes: ["id"],
       });
-      const teamIds = teamMembers.map(member => member.id);
+      const teamIds = teamMembers.map((member) => member.id);
       whereClause.userId = teamIds;
     }
 
@@ -67,21 +63,21 @@ exports.getVendorPaymentRequests = async (req, res) => {
         {
           model: User,
           as: "user",
-          attributes: ["id", "name", "email", "role"]
-        }
+          attributes: ["id", "name", "email", "role"],
+        },
       ],
-      order: [["createdAt", "DESC"]]
+      order: [["createdAt", "DESC"]],
     });
 
     res.json({
       success: true,
-      data: requests
+      data: requests,
     });
   } catch (err) {
     console.error("getVendorPaymentRequests err:", err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
@@ -101,18 +97,18 @@ exports.managerApproval = async (req, res) => {
 
     await payment.update({
       manager_status: status,
-      manager_reason: reason || null
+      manager_reason: reason || null,
     });
 
     res.json({
       success: true,
-      message: "Manager decision recorded successfully"
+      message: "Manager decision recorded successfully",
     });
   } catch (err) {
     console.error("managerApproval err:", err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };
@@ -132,18 +128,18 @@ exports.adminApproval = async (req, res) => {
 
     await payment.update({
       admin_status: status,
-      admin_reason: reason || null
+      admin_reason: reason || null,
     });
 
     res.json({
       success: true,
-      message: "Admin decision recorded successfully"
+      message: "Admin decision recorded successfully",
     });
   } catch (err) {
     console.error("adminApproval err:", err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
     });
   }
 };

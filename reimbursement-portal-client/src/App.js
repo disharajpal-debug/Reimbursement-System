@@ -3,15 +3,10 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import ManagerDashboard from "./pages/Manager/ManagerDashboard";
+import ManagerDashboard from "./pages/Manager/UpdatedManagerDashboard";
 import EmployeeHome from "./pages/employeedashboard/EmployeeHome";
 import UserManagement from "./pages/admin/users/UserManagement";
 import VoucherApproval from "./pages/admin/Vouchers/VoucherApproval";
-// import CashPaymentForm from "./pages/admin/forms/CashPaymentForm";
-// import LocalTravelForm from "./pages/admin/forms/LocalTravelForm";
-// import OutstationTravelForm from "./pages/admin/forms/OutstationTravelForm";
-// import VendorPaymentForm from "./pages/admin/forms/VendorPaymentForm";
-// import TravelRequestForm from "./pages/admin/forms/TravelRequestForm";
 import { isAuthenticated, getRole } from "./utils/auth";
 
 // 🔒 Wrapper for protected routes

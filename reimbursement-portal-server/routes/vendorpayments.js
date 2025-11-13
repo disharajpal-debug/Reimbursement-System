@@ -111,23 +111,9 @@ router.post("/", authenticateToken, async (req, res) => {
 
     const created = await db.VendorPayment.create(payload);
 
-    const formData = {
-      vendorName,
-      date,
-      voucherNo: created.voucherNo || voucherNo || "",
-      ecLocation,
-      bills,
-      totalExpenses,
-      amtInWords,
-      preparedBy,
-    };
-
-    await createVoucherFromForm(
-      { ...formData, proofs },
-      "vendor_payment",
-      userId,
-      req.user.name || vendorName
-    );
+    // Do not auto-create a Voucher here to avoid duplicating the request in
+    // both VendorPayment and Voucher tables. If a voucher is needed, create
+    // it explicitly from a dedicated endpoint or background job.
 
     res.status(201).json({ success: true, data: created });
   } catch (err) {
@@ -172,12 +158,10 @@ router.put("/:id/manager-action", authenticateToken, async (req, res) => {
     const { action, reason } = req.body;
 
     if (req.user.role !== "manager") {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: "Access denied. Manager role required.",
-        });
+      return res.status(403).json({
+        success: false,
+        error: "Access denied. Manager role required.",
+      });
     }
 
     const payment = await db.VendorPayment.findByPk(id);
@@ -195,12 +179,10 @@ router.put("/:id/manager-action", authenticateToken, async (req, res) => {
     const teamIds = teamMembers.map((m) => m.id);
 
     if (!teamIds.includes(payment.userId)) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          error: "Access denied. This payment does not belong to your team.",
-        });
+      return res.status(403).json({
+        success: false,
+        error: "Access denied. This payment does not belong to your team.",
+      });
     }
 
     if (action === "approve") {
@@ -212,12 +194,10 @@ router.put("/:id/manager-action", authenticateToken, async (req, res) => {
       payment.status = "rejected";
       payment.manager_reason = reason || "Rejected by manager";
     } else {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: "Invalid action. Must be 'approve' or 'reject'",
-        });
+      return res.status(400).json({
+        success: false,
+        error: "Invalid action. Must be 'approve' or 'reject'",
+      });
     }
 
     await payment.save();
@@ -228,12 +208,10 @@ router.put("/:id/manager-action", authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error("Error updating vendor payment status:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: "Failed to update vendor payment status",
-      });
+    res.status(500).json({
+      success: false,
+      error: "Failed to update vendor payment status",
+    });
   }
 });
 

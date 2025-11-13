@@ -354,16 +354,83 @@ const ManagerDashboard = () => {
   const renderRequestTable = (requests, showActions = false) => {
     return (
       <div style={{ overflowX: "auto" }}>
-        <table className="table" style={{ width: "100%" }}>
+        <table
+          className="table"
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            backgroundColor: "#fff",
+            borderRadius: "8px",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          }}
+        >
           <thead>
-            <tr>
-              <th>Employee</th>
-              <th>Form Type</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Submitted</th>
-              <th>Proofs</th>
-              {showActions && <th>Actions</th>}
+            <tr style={{ backgroundColor: "#f8f9fa" }}>
+              <th
+                style={{
+                  padding: "15px",
+                  borderBottom: "2px solid #dee2e6",
+                  textAlign: "left",
+                }}
+              >
+                Employee
+              </th>
+              <th
+                style={{
+                  padding: "15px",
+                  borderBottom: "2px solid #dee2e6",
+                  textAlign: "left",
+                }}
+              >
+                Form Type
+              </th>
+              <th
+                style={{
+                  padding: "15px",
+                  borderBottom: "2px solid #dee2e6",
+                  textAlign: "left",
+                }}
+              >
+                Amount
+              </th>
+              <th
+                style={{
+                  padding: "15px",
+                  borderBottom: "2px solid #dee2e6",
+                  textAlign: "left",
+                }}
+              >
+                Status
+              </th>
+              <th
+                style={{
+                  padding: "15px",
+                  borderBottom: "2px solid #dee2e6",
+                  textAlign: "left",
+                }}
+              >
+                Submitted
+              </th>
+              <th
+                style={{
+                  padding: "15px",
+                  borderBottom: "2px solid #dee2e6",
+                  textAlign: "left",
+                }}
+              >
+                Proofs
+              </th>
+              {showActions && (
+                <th
+                  style={{
+                    padding: "15px",
+                    borderBottom: "2px solid #dee2e6",
+                    textAlign: "left",
+                  }}
+                >
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -371,25 +438,34 @@ const ManagerDashboard = () => {
               const isPending =
                 req.status === "pending" || req.status?.includes("pending");
               return (
-                <tr key={`request-${req.formType}-${req._id || i}`}>
-                  <td>
-                    <strong>{req.employeeName}</strong>
+                <tr
+                  key={`request-${req.formType}-${req._id || i}`}
+                  style={{
+                    borderBottom: "1px solid #dee2e6",
+                    transition: "background-color 0.2s",
+                    ":hover": { backgroundColor: "#f8f9fa" },
+                  }}
+                >
+                  <td style={{ padding: "15px" }}>
+                    <strong>{req.employeeName || "Unknown"}</strong>
                   </td>
-                  <td>{req._formTypeLabel}</td>
-                  <td>
+                  <td style={{ padding: "15px" }}>
+                    {req._formTypeLabel || req.formType}
+                  </td>
+                  <td style={{ padding: "15px" }}>
                     <strong>
                       ₹
                       {typeof req.amount === "number"
                         ? req.amount.toLocaleString("en-IN")
-                        : req.amount}
+                        : req.amount || 0}
                     </strong>
                   </td>
-                  <td>
+                  <td style={{ padding: "15px" }}>
                     <span className={getStatusBadge(req.status)}>
-                      {formatStatus(req.status)}
+                      {formatStatus(req.status || "pending")}
                     </span>
                   </td>
-                  <td>
+                  <td style={{ padding: "15px" }}>
                     {req.createdAt
                       ? new Date(req.createdAt).toLocaleDateString("en-IN", {
                           year: "numeric",
@@ -398,7 +474,7 @@ const ManagerDashboard = () => {
                         })
                       : "-"}
                   </td>
-                  <td>
+                  <td style={{ padding: "15px" }}>
                     {getAllProofs(req).length > 0 ? (
                       <a
                         href={toProofUrl(getAllProofs(req)[0])}
@@ -407,6 +483,7 @@ const ManagerDashboard = () => {
                         style={{
                           fontSize: "13px",
                           textDecoration: "underline",
+                          color: "#2980b9",
                         }}
                       >
                         View ({getAllProofs(req).length})
@@ -416,17 +493,22 @@ const ManagerDashboard = () => {
                     )}
                   </td>
                   {showActions && (
-                    <td>
+                    <td style={{ padding: "15px" }}>
                       {isPending ? (
-                        <>
+                        <div style={{ display: "flex", gap: "8px" }}>
                           <button
                             className="button"
                             disabled={actionLoadingId === req._id}
                             style={{
-                              marginRight: 8,
                               background: "#28a745",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "8px 16px",
                               fontSize: "12px",
-                              padding: "6px 12px",
+                              cursor: "pointer",
+                              transition: "background-color 0.2s",
+                              opacity: actionLoadingId === req._id ? 0.7 : 1,
                             }}
                             onClick={() => handleActionClick(req, "approve")}
                           >
@@ -437,14 +519,20 @@ const ManagerDashboard = () => {
                             disabled={actionLoadingId === req._id}
                             style={{
                               background: "#dc3545",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "8px 16px",
                               fontSize: "12px",
-                              padding: "6px 12px",
+                              cursor: "pointer",
+                              transition: "background-color 0.2s",
+                              opacity: actionLoadingId === req._id ? 0.7 : 1,
                             }}
                             onClick={() => handleActionClick(req, "reject")}
                           >
                             Reject
                           </button>
-                        </>
+                        </div>
                       ) : (
                         <span style={{ fontSize: "12px", color: "#666" }}>
                           {formatStatus(req.status)}
